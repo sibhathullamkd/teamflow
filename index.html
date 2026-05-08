@@ -36,39 +36,7 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden;}
 
-/* ── LOCK SCREEN ── */
-#lockScreen{
-  position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;
-  z-index:9999;flex-direction:column;gap:0;
-}
-#lockScreen .lock-inner{
-  background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius2);
-  padding:48px;width:380px;max-width:90vw;text-align:center;
-  box-shadow:var(--shadow2);
-  animation:fadeUp 0.5s ease;
-}
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-.lock-logo{
-  width:56px;height:56px;background:var(--gold);border-radius:14px;
-  display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;
-  color:#0a0a0b;margin:0 auto 20px;letter-spacing:-1px;
-}
-.lock-title{font-size:22px;font-weight:600;margin-bottom:6px;}
-.lock-sub{font-size:13px;color:var(--text2);margin-bottom:32px;}
-.lock-input{
-  width:100%;background:var(--bg4);border:1px solid var(--border2);border-radius:var(--radius);
-  padding:13px 16px;color:var(--text);font-family:var(--font);font-size:14px;outline:none;
-  transition:border-color 0.2s;margin-bottom:12px;
-}
-.lock-input:focus{border-color:var(--gold);}
-.lock-btn{
-  width:100%;background:var(--gold);color:#0a0a0b;border:none;border-radius:var(--radius);
-  padding:13px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;
-  transition:opacity 0.2s,transform 0.1s;letter-spacing:0.3px;
-}
-.lock-btn:hover{opacity:0.9;}
-.lock-btn:active{transform:scale(0.99);}
-.lock-err{color:var(--red);font-size:12px;margin-top:8px;min-height:16px;}
+
 
 /* ── MAIN LAYOUT ── */
 #app{display:flex;height:100vh;overflow:hidden;}
@@ -507,21 +475,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 </head>
 <body>
 
-<!-- LOCK SCREEN -->
-<div id="lockScreen">
-  <div class="lock-inner">
-    <div class="lock-logo">TF</div>
-    <div class="lock-title">TeamFlow Portal</div>
-    <div class="lock-sub">Collaboration &amp; Project Hub</div>
-    <input type="text" id="lockUser" class="lock-input" placeholder="Username" autocomplete="off">
-    <input type="password" id="lockPass" class="lock-input" placeholder="Password">
-    <button class="lock-btn" onclick="tryUnlock()">Unlock Portal</button>
-    <div class="lock-err" id="lockErr"></div>
-  </div>
 </div>
 
 <!-- MAIN APP -->
-<div id="app" style="display:none;">
+<div id="app" style="display:flex;">
   <!-- SIDEBAR -->
   <div id="sidebar">
     <div class="sidebar-head">
@@ -556,9 +513,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <div class="user-name" id="sidebarName">Guest</div>
         <div class="user-role" id="sidebarEmail">—</div>
       </div>
-      <button class="logout-btn" onclick="doLogout()" title="Lock Portal">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      </button>
     </div>
   </div>
 
@@ -686,9 +640,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 // ═══════════════════════════════════════════════
 const CONFIG = {
   supabaseUrl: 'https://etdbsiayudhbfaszwwwn.supabase.co',
-  supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0ZGJzaWF5dWRoYmZhc3p3d3duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMTM4MDIsImV4cCI6MjA5Mzc4OTgwMn0.wPfUD_2vHpw6uwra6_dmJZTzeFaCoLeg9RMxWos8VHk',
-  lockUser: 'admin',
-  lockPass: 'teamflow2024',
+  supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0ZGJzaWF5dWRoYmZhc3p3d3duIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODIxMzgwMiwiZXhwIjoyMDkzNzg5ODAyfQ.gkbCWhb4mrXz65iACh2Qoi0xclQqK58o9rXank51mb4',
 };
 
 let supabase = null;
@@ -701,36 +653,9 @@ let allUsers = {};
 // ═══════════════════════════════════════════════
 // LOCK SCREEN
 // ═══════════════════════════════════════════════
-function tryUnlock() {
-  const u = document.getElementById('lockUser').value.trim();
-  const p = document.getElementById('lockPass').value;
-  if (u === CONFIG.lockUser && p === CONFIG.lockPass) {
-    document.getElementById('lockScreen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    initApp();
-  } else {
-    const err = document.getElementById('lockErr');
-    err.textContent = 'Invalid username or password.';
-    document.getElementById('lockPass').value = '';
-    setTimeout(() => err.textContent = '', 3000);
-  }
-}
-document.getElementById('lockPass').addEventListener('keydown', e => {
-  if (e.key === 'Enter') tryUnlock();
-});
-document.getElementById('lockUser').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('lockPass').focus();
-});
 
-function doLogout() {
-  if (chatChannel) { supabase?.removeChannel(chatChannel); chatChannel = null; }
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('lockScreen').style.display = 'flex';
-  document.getElementById('lockUser').value = '';
-  document.getElementById('lockPass').value = '';
-  currentUser = null;
-  allMessages = [];
-}
+
+
 
 // ═══════════════════════════════════════════════
 // INIT
@@ -796,13 +721,12 @@ function updateSidebarUser() {
   document.getElementById('sidebarAvatar').textContent = initials;
   document.getElementById('sidebarName').textContent = currentUser.name;
   document.getElementById('sidebarEmail').textContent = currentUser.email;
-  const el = document.getElementById('settingsUsername'); if (el) el.textContent = CONFIG.lockUser;
 }
 
 // ═══════════════════════════════════════════════
 // SUPABASE INIT
 // ═══════════════════════════════════════════════
-async function initSupabase() {
+function initSupabase() {
   if (!CONFIG.supabaseUrl || !CONFIG.supabaseKey) {
     const cs0 = document.getElementById('connStatus'); if(cs0){cs0.textContent='⚠ Not configured';cs0.style.color='var(--gold)';}
     loadDemoMessages();
@@ -811,26 +735,18 @@ async function initSupabase() {
   try {
     supabase = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
     const cs1 = document.getElementById('connStatus'); if(cs1){cs1.textContent='✓ Connected';cs1.style.color='var(--green)';}
-    // Test connection with a quick query, fall back to demo if it fails
-    const test = await supabase.from('messages').select('id').limit(1);
-    if (test.error) {
-      console.error('Supabase test failed:', test.error);
-      const cs2 = document.getElementById('connStatus'); if(cs2){cs2.textContent='✕ DB Error';cs2.style.color='var(--red)';}
-      toast('DB: ' + test.error.message, 'error');
-      loadDemoMessages(); loadDemoTasks(); loadDemoUsers();
-      return;
-    }
     loadMessages();
     subscribeToMessages();
     loadTasks();
     loadUsers();
+    // Register/update user
     if (currentUser) {
-      supabase.from('users').upsert({ email: currentUser.email, name: currentUser.name, last_seen: new Date().toISOString() }, { onConflict: 'email' }).then(r => { if(r.error) console.error('upsert:', r.error); });
+      supabase.from('users').upsert({ email: currentUser.email, name: currentUser.name, last_seen: new Date().toISOString() }, { onConflict: 'email' });
     }
   } catch(e) {
-    console.error('initSupabase catch:', e);
+    console.error(e);
     const cs2 = document.getElementById('connStatus'); if(cs2){cs2.textContent='✕ Error';cs2.style.color='var(--red)';}
-    loadDemoMessages(); loadDemoTasks(); loadDemoUsers();
+    loadDemoMessages();
   }
 }
 
@@ -838,16 +754,16 @@ async function initSupabase() {
 // MESSAGES
 // ═══════════════════════════════════════════════
 async function loadMessages() {
-  if (!supabase) { loadDemoMessages(); return; }
-  try {
-    const { data, error } = await supabase
-      .from('messages').select('*')
-      .order('created_at', { ascending: true }).limit(200);
-    if (error) { console.error('msg error:', error); loadDemoMessages(); return; }
-    allMessages = data || [];
-    renderMessages(allMessages);
-    updateMemberCount();
-  } catch(e) { console.error(e); loadDemoMessages(); }
+  if (!supabase) return;
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .order('created_at', { ascending: true })
+    .limit(200);
+  if (error) { console.error(error); toast('Error loading messages', 'error'); return; }
+  allMessages = data || [];
+  renderMessages(allMessages);
+  updateMemberCount();
 }
 
 function subscribeToMessages() {
@@ -1051,13 +967,11 @@ function updateMemberCount() {
 let tasks = [];
 
 async function loadTasks() {
-  if (!supabase) { loadDemoTasks(); return; }
-  try {
-    const { data, error } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
-    if (error) { console.error('tasks error:', error); loadDemoTasks(); return; }
-    tasks = data || [];
-    renderTasks();
-  } catch(e) { console.error(e); loadDemoTasks(); }
+  if (!supabase) return;
+  const { data, error } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
+  if (error) { console.error(error); return; }
+  tasks = data || [];
+  renderTasks();
 }
 
 function loadDemoTasks() {
@@ -1186,18 +1100,17 @@ async function deleteTask(id) {
 // USERS PANEL
 // ═══════════════════════════════════════════════
 async function loadUsers() {
-  if (!supabase) { loadDemoUsers(); return; }
-  try {
-    const { data } = await supabase.from('users').select('*').order('last_seen', { ascending: false });
-    if (!data) { loadDemoUsers(); return; }
-    data.forEach(u => { allUsers[u.email] = u; });
-    allMessages.forEach(m => {
-      if (m.email && allUsers[m.email]) {
-        allUsers[m.email].msg_count = (allUsers[m.email].msg_count||0)+1;
-      }
-    });
-    renderUsersGrid();
-  } catch(e) { console.error(e); loadDemoUsers(); }
+  if (!supabase) return;
+  const { data } = await supabase.from('users').select('*').order('last_seen', { ascending: false });
+  if (!data) return;
+  data.forEach(u => { allUsers[u.email] = u; });
+  // Count messages per user
+  allMessages.forEach(m => {
+    if (m.email && allUsers[m.email]) {
+      allUsers[m.email].msg_count = (allUsers[m.email].msg_count||0)+1;
+    }
+  });
+  renderUsersGrid();
 }
 
 function loadDemoUsers() {
