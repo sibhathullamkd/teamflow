@@ -7,33 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-// LOCK CREDENTIALS — change these two values only
-var LOCK_USER = 'admin';
-var LOCK_PASS = 'teamflow2024';
-
-window.tryUnlock = function() {
-  var u = document.getElementById('lockUser').value.trim();
-  var p = document.getElementById('lockPass').value;
-  if (u === LOCK_USER && p === LOCK_PASS) {
-    document.getElementById('lockScreen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    if (typeof initApp === 'function') initApp();
-  } else {
-    var err = document.getElementById('lockErr');
-    err.textContent = 'Invalid username or password.';
-    document.getElementById('lockPass').value = '';
-    setTimeout(function(){ err.textContent = ''; }, 3000);
-  }
-};
-
-window.doLogout = function() {
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('lockScreen').style.display = 'flex';
-  document.getElementById('lockUser').value = '';
-  document.getElementById('lockPass').value = '';
-};
-</script>
 <style>
 :root {
   --bg: #0a0a0b;
@@ -540,8 +513,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="lock-logo">TF</div>
     <div class="lock-title">TeamFlow Portal</div>
     <div class="lock-sub">Collaboration &amp; Project Hub</div>
-    <input type="text" id="lockUser" class="lock-input" placeholder="Username" autocomplete="off" onkeydown="if(event.key==='Enter')document.getElementById('lockPass').focus()">
-    <input type="password" id="lockPass" class="lock-input" placeholder="Password" onkeydown="if(event.key==='Enter')tryUnlock()">
+    <input type="text" id="lockUser" class="lock-input" placeholder="Username" autocomplete="off">
+    <input type="password" id="lockPass" class="lock-input" placeholder="Password">
     <button class="lock-btn" onclick="tryUnlock()">Unlock Portal</button>
     <div class="lock-err" id="lockErr"></div>
   </div>
@@ -726,11 +699,31 @@ let allMessages = [];
 let allUsers = {};
 
 // ═══════════════════════════════════════════════
-// LOCK SCREEN — defined in head, aliased here for safety
+// LOCK SCREEN
 // ═══════════════════════════════════════════════
+function tryUnlock() {
+  const u = document.getElementById('lockUser').value.trim();
+  const p = document.getElementById('lockPass').value;
+  if (u === CONFIG.lockUser && p === CONFIG.lockPass) {
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    initApp();
+  } else {
+    const err = document.getElementById('lockErr');
+    err.textContent = 'Invalid username or password.';
+    document.getElementById('lockPass').value = '';
+    setTimeout(() => err.textContent = '', 3000);
+  }
+}
+document.getElementById('lockPass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryUnlock();
+});
+document.getElementById('lockUser').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('lockPass').focus();
+});
 
 function doLogout() {
-  if (chatChannel) { try { supabase?.removeChannel(chatChannel); } catch(e){} chatChannel = null; }
+  if (chatChannel) { supabase?.removeChannel(chatChannel); chatChannel = null; }
   document.getElementById('app').style.display = 'none';
   document.getElementById('lockScreen').style.display = 'flex';
   document.getElementById('lockUser').value = '';
@@ -809,7 +802,7 @@ function updateSidebarUser() {
 // ═══════════════════════════════════════════════
 // SUPABASE INIT
 // ═══════════════════════════════════════════════
-function initSupabase() {
+async function initSupabase() {
   if (!CONFIG.supabaseUrl || !CONFIG.supabaseKey) {
     const cs0 = document.getElementById('connStatus'); if(cs0){cs0.textContent='⚠ Not configured';cs0.style.color='var(--gold)';}
     loadDemoMessages();
@@ -818,18 +811,26 @@ function initSupabase() {
   try {
     supabase = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
     const cs1 = document.getElementById('connStatus'); if(cs1){cs1.textContent='✓ Connected';cs1.style.color='var(--green)';}
+    // Test connection with a quick query, fall back to demo if it fails
+    const test = await supabase.from('messages').select('id').limit(1);
+    if (test.error) {
+      console.error('Supabase test failed:', test.error);
+      const cs2 = document.getElementById('connStatus'); if(cs2){cs2.textContent='✕ DB Error';cs2.style.color='var(--red)';}
+      toast('DB: ' + test.error.message, 'error');
+      loadDemoMessages(); loadDemoTasks(); loadDemoUsers();
+      return;
+    }
     loadMessages();
     subscribeToMessages();
     loadTasks();
     loadUsers();
-    // Register/update user
     if (currentUser) {
-      supabase.from('users').upsert({ email: currentUser.email, name: currentUser.name, last_seen: new Date().toISOString() }, { onConflict: 'email' });
+      supabase.from('users').upsert({ email: currentUser.email, name: currentUser.name, last_seen: new Date().toISOString() }, { onConflict: 'email' }).then(r => { if(r.error) console.error('upsert:', r.error); });
     }
   } catch(e) {
-    console.error(e);
+    console.error('initSupabase catch:', e);
     const cs2 = document.getElementById('connStatus'); if(cs2){cs2.textContent='✕ Error';cs2.style.color='var(--red)';}
-    loadDemoMessages();
+    loadDemoMessages(); loadDemoTasks(); loadDemoUsers();
   }
 }
 
@@ -837,16 +838,16 @@ function initSupabase() {
 // MESSAGES
 // ═══════════════════════════════════════════════
 async function loadMessages() {
-  if (!supabase) return;
-  const { data, error } = await supabase
-    .from('messages')
-    .select('*')
-    .order('created_at', { ascending: true })
-    .limit(200);
-  if (error) { console.error(error); toast('Error loading messages', 'error'); return; }
-  allMessages = data || [];
-  renderMessages(allMessages);
-  updateMemberCount();
+  if (!supabase) { loadDemoMessages(); return; }
+  try {
+    const { data, error } = await supabase
+      .from('messages').select('*')
+      .order('created_at', { ascending: true }).limit(200);
+    if (error) { console.error('msg error:', error); loadDemoMessages(); return; }
+    allMessages = data || [];
+    renderMessages(allMessages);
+    updateMemberCount();
+  } catch(e) { console.error(e); loadDemoMessages(); }
 }
 
 function subscribeToMessages() {
@@ -1050,11 +1051,13 @@ function updateMemberCount() {
 let tasks = [];
 
 async function loadTasks() {
-  if (!supabase) return;
-  const { data, error } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
-  if (error) { console.error(error); return; }
-  tasks = data || [];
-  renderTasks();
+  if (!supabase) { loadDemoTasks(); return; }
+  try {
+    const { data, error } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
+    if (error) { console.error('tasks error:', error); loadDemoTasks(); return; }
+    tasks = data || [];
+    renderTasks();
+  } catch(e) { console.error(e); loadDemoTasks(); }
 }
 
 function loadDemoTasks() {
@@ -1183,17 +1186,18 @@ async function deleteTask(id) {
 // USERS PANEL
 // ═══════════════════════════════════════════════
 async function loadUsers() {
-  if (!supabase) return;
-  const { data } = await supabase.from('users').select('*').order('last_seen', { ascending: false });
-  if (!data) return;
-  data.forEach(u => { allUsers[u.email] = u; });
-  // Count messages per user
-  allMessages.forEach(m => {
-    if (m.email && allUsers[m.email]) {
-      allUsers[m.email].msg_count = (allUsers[m.email].msg_count||0)+1;
-    }
-  });
-  renderUsersGrid();
+  if (!supabase) { loadDemoUsers(); return; }
+  try {
+    const { data } = await supabase.from('users').select('*').order('last_seen', { ascending: false });
+    if (!data) { loadDemoUsers(); return; }
+    data.forEach(u => { allUsers[u.email] = u; });
+    allMessages.forEach(m => {
+      if (m.email && allUsers[m.email]) {
+        allUsers[m.email].msg_count = (allUsers[m.email].msg_count||0)+1;
+      }
+    });
+    renderUsersGrid();
+  } catch(e) { console.error(e); loadDemoUsers(); }
 }
 
 function loadDemoUsers() {
