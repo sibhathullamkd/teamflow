@@ -7,6 +7,33 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// LOCK CREDENTIALS — change these two values only
+var LOCK_USER = 'admin';
+var LOCK_PASS = 'teamflow2024';
+
+window.tryUnlock = function() {
+  var u = document.getElementById('lockUser').value.trim();
+  var p = document.getElementById('lockPass').value;
+  if (u === LOCK_USER && p === LOCK_PASS) {
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    if (typeof initApp === 'function') initApp();
+  } else {
+    var err = document.getElementById('lockErr');
+    err.textContent = 'Invalid username or password.';
+    document.getElementById('lockPass').value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+};
+
+window.doLogout = function() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('lockScreen').style.display = 'flex';
+  document.getElementById('lockUser').value = '';
+  document.getElementById('lockPass').value = '';
+};
+</script>
 <style>
 :root {
   --bg: #0a0a0b;
@@ -513,8 +540,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="lock-logo">TF</div>
     <div class="lock-title">TeamFlow Portal</div>
     <div class="lock-sub">Collaboration &amp; Project Hub</div>
-    <input type="text" id="lockUser" class="lock-input" placeholder="Username" autocomplete="off">
-    <input type="password" id="lockPass" class="lock-input" placeholder="Password">
+    <input type="text" id="lockUser" class="lock-input" placeholder="Username" autocomplete="off" onkeydown="if(event.key==='Enter')document.getElementById('lockPass').focus()">
+    <input type="password" id="lockPass" class="lock-input" placeholder="Password" onkeydown="if(event.key==='Enter')tryUnlock()">
     <button class="lock-btn" onclick="tryUnlock()">Unlock Portal</button>
     <div class="lock-err" id="lockErr"></div>
   </div>
@@ -548,10 +575,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Members &amp; Data
       </button>
-      <button class="nav-btn" onclick="showPanel('settings')" id="nav-settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        Settings
-      </button>
+      
     </nav>
     <div class="sidebar-user">
       <div class="user-avatar" id="sidebarAvatar">?</div>
@@ -702,31 +726,11 @@ let allMessages = [];
 let allUsers = {};
 
 // ═══════════════════════════════════════════════
-// LOCK SCREEN
+// LOCK SCREEN — defined in head, aliased here for safety
 // ═══════════════════════════════════════════════
-function tryUnlock() {
-  const u = document.getElementById('lockUser').value.trim();
-  const p = document.getElementById('lockPass').value;
-  if (u === CONFIG.lockUser && p === CONFIG.lockPass) {
-    document.getElementById('lockScreen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    initApp();
-  } else {
-    const err = document.getElementById('lockErr');
-    err.textContent = 'Invalid username or password.';
-    document.getElementById('lockPass').value = '';
-    setTimeout(() => err.textContent = '', 3000);
-  }
-}
-document.getElementById('lockPass').addEventListener('keydown', e => {
-  if (e.key === 'Enter') tryUnlock();
-});
-document.getElementById('lockUser').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('lockPass').focus();
-});
 
 function doLogout() {
-  if (chatChannel) { supabase?.removeChannel(chatChannel); chatChannel = null; }
+  if (chatChannel) { try { supabase?.removeChannel(chatChannel); } catch(e){} chatChannel = null; }
   document.getElementById('app').style.display = 'none';
   document.getElementById('lockScreen').style.display = 'flex';
   document.getElementById('lockUser').value = '';
@@ -799,7 +803,7 @@ function updateSidebarUser() {
   document.getElementById('sidebarAvatar').textContent = initials;
   document.getElementById('sidebarName').textContent = currentUser.name;
   document.getElementById('sidebarEmail').textContent = currentUser.email;
-  document.getElementById('settingsUsername').textContent = CONFIG.lockUser;
+  const el = document.getElementById('settingsUsername'); if (el) el.textContent = CONFIG.lockUser;
 }
 
 // ═══════════════════════════════════════════════
@@ -807,15 +811,13 @@ function updateSidebarUser() {
 // ═══════════════════════════════════════════════
 function initSupabase() {
   if (!CONFIG.supabaseUrl || !CONFIG.supabaseKey) {
-    document.getElementById('connStatus').textContent = '⚠ Not configured';
-    document.getElementById('connStatus').style.color = 'var(--gold)';
+    const cs0 = document.getElementById('connStatus'); if(cs0){cs0.textContent='⚠ Not configured';cs0.style.color='var(--gold)';}
     loadDemoMessages();
     return;
   }
   try {
     supabase = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
-    document.getElementById('connStatus').textContent = '✓ Connected';
-    document.getElementById('connStatus').style.color = 'var(--green)';
+    const cs1 = document.getElementById('connStatus'); if(cs1){cs1.textContent='✓ Connected';cs1.style.color='var(--green)';}
     loadMessages();
     subscribeToMessages();
     loadTasks();
@@ -826,8 +828,7 @@ function initSupabase() {
     }
   } catch(e) {
     console.error(e);
-    document.getElementById('connStatus').textContent = '✕ Error';
-    document.getElementById('connStatus').style.color = 'var(--red)';
+    const cs2 = document.getElementById('connStatus'); if(cs2){cs2.textContent='✕ Error';cs2.style.color='var(--red)';}
     loadDemoMessages();
   }
 }
