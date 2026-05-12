@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Planr Admin</title>
+  <!-- No index in search engines -->
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080810;
+      --surface: #0f0f18;
+      --surface2: #151520;
+      --surface3: #1a1a28;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --accent: #ff4d6d;
+      --accent2: #ff8fa3;
+      --accent-glow: rgba(255,77,109,0.25);
+      --text: #f0f0f8;
+      --muted: #6b6b80;
+      --success: #34d399;
+      --warning: #fb923c;
+      --info: #60a5fa;
+      --font-display: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+    html, body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--font-body); }
+
+    /* ---- Login screen ---- */
+    #admin-login {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .admin-login-box {
+      width: 100%;
+      max-width: 380px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px;
+      animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,77,109,0.1);
+    }
+    @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:none; } }
+
+    .admin-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,77,109,0.1);
+      border: 1px solid rgba(255,77,109,0.2);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 12px;
+      color: var(--accent2);
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+    .admin-login-box h2 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .admin-login-box p { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-label { display:block; font-size:11px; font-weight:600; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px; }
+    .form-input { width:100%; padding:11px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:var(--font-body); font-size:14px; outline:none; transition:border-color 0.2s; }
+    .form-input:focus { border-color:var(--accent); }
+    .form-input::placeholder { color:#3a3a50; }
+
+    .btn-admin-login { width:100%; padding:12px; background:var(--accent); color:#fff; border:none; border-radius:9px; font-family:var(--font-body); font-size:15px; font-weight:500; cursor:pointer; margin-top:6px; transition:opacity 0.2s; box-shadow:0 4px 16px var(--accent-glow); }
+    .btn-admin-login:hover { opacity:0.88; }
+
+    .admin-error { padding:10px 14px; background:rgba(255,77,109,0.1); border:1px solid rgba(255,77,109,0.2); border-radius:8px; font-size:13px; color:var(--accent2); margin-top:12px; display:none; }
+    .admin-error.show { display:block; }
+
+    /* ---- Admin panel ---- */
+    #admin-panel { display: none; }
+
+    .admin-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .admin-header-left { display:flex; align-items:center; gap:12px; }
+    .admin-logo { font-family:var(--font-display); font-size:18px; font-weight:800; }
+    .admin-badge-sm { font-size:10px; padding:2px 8px; background:rgba(255,77,109,0.12); color:var(--accent2); border-radius:20px; font-weight:600; letter-spacing:0.5px; }
+
+    .btn-logout { padding:7px 14px; background:transparent; border:1px solid var(--border); border-radius:8px; color:var(--muted); font-family:var(--font-body); font-size:13px; cursor:pointer; transition:all 0.15s; }
+    .btn-logout:hover { border-color:var(--accent); color:var(--accent); }
+
+    .admin-body { padding: 32px; max-width: 1100px; margin: 0 auto; }
+
+    .admin-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:32px; }
+    .admin-stat { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; }
+    .admin-stat-num { font-family:var(--font-display); font-size:28px; font-weight:800; margin-bottom:4px; }
+    .admin-stat-label { color:var(--muted); font-size:13px; }
+
+    .section-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; margin-bottom:24px; }
+    .section-card h2 { font-family:var(--font-display); font-size:18px; font-weight:700; margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+
+    /* Users table */
+    .table-wrap { overflow-x: auto; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th { text-align:left; padding:10px 14px; color:var(--muted); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid var(--border); white-space:nowrap; }
+    td { padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:var(--surface2); }
+
+    .user-row-avatar { width:30px; height:30px; border-radius:50%; background:var(--accent); display:grid; place-items:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
+    .user-cell { display:flex; align-items:center; gap:10px; }
+
+    .badge { font-size:11px; padding:3px 8px; border-radius:20px; font-weight:500; }
+    .badge-green { background:rgba(52,211,153,0.12); color:var(--success); }
+    .badge-orange { background:rgba(251,146,60,0.12); color:var(--warning); }
+    .badge-blue { background:rgba(96,165,250,0.12); color:var(--info); }
+
+    .btn-sm { padding:5px 12px; border-radius:7px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:var(--font-body); font-size:12px; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+    .btn-sm:hover { border-color:var(--border2); color:var(--text); }
+    .btn-sm.danger:hover { border-color:rgba(255,77,109,0.4); color:var(--accent); background:rgba(255,77,109,0.08); }
+    .btn-sm.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .btn-sm.primary:hover { opacity:0.85; }
+
+    .action-btns { display:flex; gap:6px; }
+
+    /* Expandable rows */
+    .detail-row { display:none; }
+    .detail-row.open { display:table-row; }
+    .detail-cell { padding:16px 14px; background:var(--surface2); }
+    .detail-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+    .detail-item label { font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px; }
+    .detail-item span { font-size:13px; }
+
+    .pw-reset-form { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .pw-reset-form input { flex:1; min-width:180px; padding:8px 12px; background:var(--surface3); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:var(--font-body); font-size:13px; outline:none; }
+    .pw-reset-form input:focus { border-color:var(--accent); }
+
+    /* Search */
+    .table-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:12px; flex-wrap:wrap; }
+    .search-input { padding:8px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:var(--font-body); font-size:13px; outline:none; width:240px; }
+    .search-input:focus { border-color:var(--accent); }
+
+    /* Data view tabs */
+    .data-tabs { display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+    .data-tab { padding:6px 14px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:var(--font-body); font-size:13px; cursor:pointer; transition:all 0.15s; }
+    .data-tab:hover { border-color:var(--border2); color:var(--text); }
+    .data-tab.active { background:rgba(255,77,109,0.12); border-color:rgba(255,77,109,0.3); color:var(--accent2); }
+
+    .loading { text-align:center; padding:40px; color:var(--muted); }
+
+    .toast { position:fixed; bottom:24px; right:24px; background:var(--surface2); border:1px solid var(--border2); border-radius:10px; padding:12px 18px; font-size:14px; z-index:999; transform:translateY(10px); opacity:0; transition:all 0.25s; pointer-events:none; }
+    .toast.show { transform:none; opacity:1; }
+
+    /* Modal */
+    .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); z-index:200; align-items:center; justify-content:center; padding:24px; }
+    .modal-backdrop.open { display:flex; }
+    .modal { background:var(--surface); border:1px solid var(--border2); border-radius:20px; padding:28px; width:100%; max-width:460px; animation:slideUp 0.3s ease; }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+    .modal-header h3 { font-family:var(--font-display); font-size:18px; font-weight:700; }
+    .modal-close { width:30px; height:30px; border-radius:8px; border:none; background:var(--surface2); color:var(--muted); cursor:pointer; font-size:14px; }
+    .modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+
+    @media (max-width:700px) {
+      .admin-body { padding:16px; }
+      .detail-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Admin Login -->
+<div id="admin-login">
+  <div class="admin-login-box">
+    <div class="admin-badge">🔒 Admin Access Only</div>
+    <h2>Admin Panel</h2>
+    <p>Restricted area. Authorized personnel only.</p>
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <input type="text" id="admin-user" class="form-input" placeholder="Admin username" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" id="admin-pass" class="form-input" placeholder="••••••••" />
+    </div>
+    <button class="btn-admin-login" onclick="adminLogin()">Access Panel</button>
+    <div class="admin-error" id="admin-err">Incorrect credentials. Access denied.</div>
+  </div>
+</div>
+
+<!-- Admin Panel -->
+<div id="admin-panel">
+  <div class="admin-header">
+    <div class="admin-header-left">
+      <span class="admin-logo">📋 Planr</span>
+      <span class="admin-badge-sm">ADMIN</span>
+    </div>
+    <button class="btn-logout" onclick="adminLogout()">Sign Out</button>
+  </div>
+
+  <div class="admin-body">
+
+    <!-- Stats -->
+    <div class="admin-stats" id="admin-stats">
+      <div class="admin-stat">
+        <div class="admin-stat-num" id="stat-users">—</div>
+        <div class="admin-stat-label">Total Users</div>
+      </div>
+      <div class="admin-stat">
+        <div class="admin-stat-num" id="stat-all-notes">—</div>
+        <div class="admin-stat-label">Total Notes</div>
+      </div>
+      <div class="admin-stat">
+        <div class="admin-stat-num" id="stat-all-tasks">—</div>
+        <div class="admin-stat-label">Total Tasks</div>
+      </div>
+      <div class="admin-stat">
+        <div class="admin-stat-num" id="stat-all-events">—</div>
+        <div class="admin-stat-label">Total Events</div>
+      </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="section-card">
+      <div class="table-header">
+        <h2>👥 User Accounts</h2>
+        <input type="text" class="search-input" placeholder="Search users..." oninput="searchUsers(this.value)" />
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Email</th>
+              <th>Created</th>
+              <th>Last Sign In</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody">
+            <tr><td colspan="5" class="loading">Loading users...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- All Data Section -->
+    <div class="section-card">
+      <h2>📊 All User Data</h2>
+      <div class="data-tabs">
+        <button class="data-tab active" onclick="showDataTab('notes', this)">Notes</button>
+        <button class="data-tab" onclick="showDataTab('tasks', this)">Tasks</button>
+        <button class="data-tab" onclick="showDataTab('events', this)">Events</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead id="data-thead"></thead>
+          <tbody id="data-tbody">
+            <tr><td class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Password Reset Modal -->
+<div class="modal-backdrop" id="pw-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Reset Password</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:16px">Resetting password for: <strong id="pw-user-email"></strong></p>
+    <div class="form-group">
+      <label class="form-label">New Password</label>
+      <input type="text" id="new-password" class="form-input" placeholder="Enter new password (min 6 chars)" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn-sm primary" onclick="confirmReset()">Reset Password</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="admin-toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
