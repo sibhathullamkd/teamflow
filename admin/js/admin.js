@@ -14,16 +14,16 @@ if (sessionStorage.getItem('planr_admin_auth') === 'true') {
   bootAdmin();
 }
 
-document.getElementById('l-pass').addEventListener('keydown', function(e) {
+document.getElementById('adm-pass').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') doLogin();
 });
-document.getElementById('l-user').addEventListener('keydown', function(e) {
+document.getElementById('adm-user').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') doLogin();
 });
 
 function doLogin() {
-  var u = document.getElementById('l-user').value.trim();
-  var p = document.getElementById('l-pass').value;
+  var u = document.getElementById('adm-user').value.trim();
+  var p = document.getElementById('adm-pass').value;
   var err = document.getElementById('l-err');
 
   if (u === ADMIN_USERNAME && p === adminPw) {
@@ -37,12 +37,18 @@ function doLogin() {
   }
 }
 
+function adminLogin() {
+  doLogin();
+}
+
+
+
 function doLogout() {
   sessionStorage.removeItem('planr_admin_auth');
   document.getElementById('admin-shell').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('l-user').value = '';
-  document.getElementById('l-pass').value = '';
+  document.getElementById('adm-user').value = '';
+  document.getElementById('adm-pass').value = '';
 }
 
 function bootAdmin() {
