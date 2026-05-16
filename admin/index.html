@@ -1,302 +1,417 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Planr Admin</title>
-  <!-- No index in search engines -->
+  <title>Planr — Admin Control Center</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #080810;
-      --surface: #0f0f18;
-      --surface2: #151520;
-      --surface3: #1a1a28;
-      --border: rgba(255,255,255,0.07);
-      --border2: rgba(255,255,255,0.12);
-      --accent: #ff4d6d;
-      --accent2: #ff8fa3;
-      --accent-glow: rgba(255,77,109,0.25);
-      --text: #f0f0f8;
-      --muted: #6b6b80;
-      --success: #34d399;
-      --warning: #fb923c;
-      --info: #60a5fa;
-      --font-display: 'Syne', sans-serif;
-      --font-body: 'DM Sans', sans-serif;
+      --bg: #07070e; --surface: #0d0d18; --surface2: #12121f; --surface3: #181828;
+      --border: rgba(255,255,255,0.06); --border2: rgba(255,255,255,0.11);
+      --accent: #e63f6b; --accent2: #ff6b8a; --accent-glow: rgba(230,63,107,0.2);
+      --blue: #3b82f6; --green: #10b981; --orange: #f59e0b; --purple: #8b5cf6;
+      --text: #efeffa; --muted: #64648a; --muted2: #3a3a58;
+      --font-display: 'Syne', sans-serif; --font-body: 'DM Sans', sans-serif; --font-mono: 'JetBrains Mono', monospace;
+      --sidebar-w: 220px;
     }
     html, body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--font-body); }
 
-    /* ---- Login screen ---- */
-    #admin-login {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .admin-login-box {
-      width: 100%;
-      max-width: 380px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 36px;
-      animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1);
-      box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,77,109,0.1);
-    }
-    @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:none; } }
+    /* LOGIN */
+    #admin-login { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+    #admin-login::before { content: ''; position: absolute; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(230,63,107,0.08) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .login-box { position: relative; z-index: 1; width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--border2); border-radius: 20px; padding: 40px; box-shadow: 0 32px 80px rgba(0,0,0,0.6); animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1); }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:none; } }
+    .login-icon { width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent), #8b1a35); border-radius: 14px; display: grid; place-items: center; font-size: 22px; margin-bottom: 20px; }
+    .login-box h2 { font-family: var(--font-display); font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+    .login-box p { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+    .fl { margin-bottom: 16px; }
+    .fl label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+    .fl input { width: 100%; padding: 11px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; color: var(--text); font-family: var(--font-body); font-size: 14px; outline: none; transition: border-color 0.2s; }
+    .fl input:focus { border-color: var(--accent); }
+    .fl input::placeholder { color: var(--muted2); }
+    .btn-login { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 9px; font-family: var(--font-body); font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; box-shadow: 0 4px 20px var(--accent-glow); margin-top: 4px; }
+    .btn-login:hover { opacity: 0.88; }
+    .login-err { padding: 10px 14px; background: rgba(230,63,107,0.1); border: 1px solid rgba(230,63,107,0.2); border-radius: 8px; font-size: 13px; color: var(--accent2); margin-top: 12px; display: none; }
+    .login-err.show { display: block; }
 
-    .admin-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255,77,109,0.1);
-      border: 1px solid rgba(255,77,109,0.2);
-      border-radius: 20px;
-      padding: 5px 12px;
-      font-size: 12px;
-      color: var(--accent2);
-      margin-bottom: 20px;
-      font-weight: 500;
-    }
-    .admin-login-box h2 {
-      font-family: var(--font-display);
-      font-size: 22px;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-    .admin-login-box p { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
-
-    .form-group { margin-bottom: 14px; }
-    .form-label { display:block; font-size:11px; font-weight:600; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px; }
-    .form-input { width:100%; padding:11px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:var(--font-body); font-size:14px; outline:none; transition:border-color 0.2s; }
-    .form-input:focus { border-color:var(--accent); }
-    .form-input::placeholder { color:#3a3a50; }
-
-    .btn-admin-login { width:100%; padding:12px; background:var(--accent); color:#fff; border:none; border-radius:9px; font-family:var(--font-body); font-size:15px; font-weight:500; cursor:pointer; margin-top:6px; transition:opacity 0.2s; box-shadow:0 4px 16px var(--accent-glow); }
-    .btn-admin-login:hover { opacity:0.88; }
-
-    .admin-error { padding:10px 14px; background:rgba(255,77,109,0.1); border:1px solid rgba(255,77,109,0.2); border-radius:8px; font-size:13px; color:var(--accent2); margin-top:12px; display:none; }
-    .admin-error.show { display:block; }
-
-    /* ---- Admin panel ---- */
+    /* PANEL */
     #admin-panel { display: none; }
+    .adm-sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 100; }
+    .adm-logo { padding: 20px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+    .adm-logo-text { font-family: var(--font-display); font-size: 16px; font-weight: 800; }
+    .adm-badge { font-size: 9px; padding: 2px 7px; background: rgba(230,63,107,0.15); color: var(--accent2); border-radius: 20px; font-weight: 700; letter-spacing: 0.8px; }
+    .adm-nav { flex: 1; padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+    .adm-nav-section { font-size: 10px; font-weight: 700; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.8px; padding: 12px 10px 4px; }
+    .adm-nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: var(--muted); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; }
+    .adm-nav-item:hover { background: var(--surface2); color: var(--text); }
+    .adm-nav-item.active { background: rgba(230,63,107,0.12); color: var(--accent2); }
+    .nav-icon { font-size: 15px; flex-shrink: 0; }
+    .adm-footer { padding: 12px; border-top: 1px solid var(--border); }
+    .btn-signout { width: 100%; padding: 9px; border: 1px solid var(--border); background: transparent; color: var(--muted); border-radius: 8px; font-family: var(--font-body); font-size: 13px; cursor: pointer; transition: all 0.15s; }
+    .btn-signout:hover { border-color: var(--accent); color: var(--accent); }
 
-    .admin-header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 0 32px;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky; top: 0; z-index: 10;
-    }
-    .admin-header-left { display:flex; align-items:center; gap:12px; }
-    .admin-logo { font-family:var(--font-display); font-size:18px; font-weight:800; }
-    .admin-badge-sm { font-size:10px; padding:2px 8px; background:rgba(255,77,109,0.12); color:var(--accent2); border-radius:20px; font-weight:600; letter-spacing:0.5px; }
+    .adm-main { margin-left: var(--sidebar-w); min-height: 100vh; }
+    .adm-topbar { position: sticky; top: 0; z-index: 50; background: rgba(7,7,14,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 0 28px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+    .adm-page-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+    .adm-topbar-right { display: flex; align-items: center; gap: 12px; }
+    .adm-time { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
 
-    .btn-logout { padding:7px 14px; background:transparent; border:1px solid var(--border); border-radius:8px; color:var(--muted); font-family:var(--font-body); font-size:13px; cursor:pointer; transition:all 0.15s; }
-    .btn-logout:hover { border-color:var(--accent); color:var(--accent); }
+    .adm-body { padding: 28px; }
+    .adm-section { display: none; }
+    .adm-section.active { display: block; animation: fadeIn 0.25s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
 
-    .admin-body { padding: 32px; max-width: 1100px; margin: 0 auto; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+    .stat-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .stat-icon { font-size: 20px; }
+    .stat-num { font-family: var(--font-display); font-size: 30px; font-weight: 800; line-height: 1; }
+    .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
-    .admin-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:32px; }
-    .admin-stat { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; }
-    .admin-stat-num { font-family:var(--font-display); font-size:28px; font-weight:800; margin-bottom:4px; }
-    .admin-stat-label { color:var(--muted); font-size:13px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 20px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+    .card-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
 
-    .section-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; margin-bottom:24px; }
-    .section-card h2 { font-family:var(--font-display); font-size:18px; font-weight:700; margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 9px 14px; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    td { padding: 13px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tbody tr { transition: background 0.12s; }
+    tbody tr:hover td { background: var(--surface2); }
 
-    /* Users table */
-    .table-wrap { overflow-x: auto; }
-    table { width:100%; border-collapse:collapse; font-size:13px; }
-    th { text-align:left; padding:10px 14px; color:var(--muted); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid var(--border); white-space:nowrap; }
-    td { padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
-    tr:last-child td { border-bottom:none; }
-    tr:hover td { background:var(--surface2); }
+    .u-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--purple)); display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .u-cell { display: flex; align-items: center; gap: 10px; }
 
-    .user-row-avatar { width:30px; height:30px; border-radius:50%; background:var(--accent); display:grid; place-items:center; font-size:13px; font-weight:700; color:#fff; flex-shrink:0; }
-    .user-cell { display:flex; align-items:center; gap:10px; }
+    .badge { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 600; white-space: nowrap; }
+    .badge-green { background: rgba(16,185,129,0.12); color: var(--green); }
+    .badge-red { background: rgba(230,63,107,0.12); color: var(--accent2); }
+    .badge-blue { background: rgba(59,130,246,0.12); color: var(--blue); }
+    .badge-orange { background: rgba(245,158,11,0.12); color: var(--orange); }
+    .badge-purple { background: rgba(139,92,246,0.12); color: var(--purple); }
 
-    .badge { font-size:11px; padding:3px 8px; border-radius:20px; font-weight:500; }
-    .badge-green { background:rgba(52,211,153,0.12); color:var(--success); }
-    .badge-orange { background:rgba(251,146,60,0.12); color:var(--warning); }
-    .badge-blue { background:rgba(96,165,250,0.12); color:var(--info); }
+    .btn { padding: 6px 13px; border-radius: 7px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: var(--font-body); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+    .btn:hover { border-color: var(--border2); color: var(--text); background: var(--surface2); }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn-primary:hover { opacity: 0.85; background: var(--accent); color: #fff; }
+    .btn-danger { color: var(--accent2); }
+    .btn-danger:hover { border-color: rgba(230,63,107,0.4); background: rgba(230,63,107,0.08); color: var(--accent); }
+    .btn-blue { color: var(--blue); }
+    .btn-blue:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.08); }
+    .btn-green { color: var(--green); }
+    .btn-green:hover { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.08); }
+    .btn-group { display: flex; gap: 5px; flex-wrap: wrap; }
 
-    .btn-sm { padding:5px 12px; border-radius:7px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:var(--font-body); font-size:12px; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
-    .btn-sm:hover { border-color:var(--border2); color:var(--text); }
-    .btn-sm.danger:hover { border-color:rgba(255,77,109,0.4); color:var(--accent); background:rgba(255,77,109,0.08); }
-    .btn-sm.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
-    .btn-sm.primary:hover { opacity:0.85; }
+    .search-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .search-inp { padding: 8px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--font-body); font-size: 13px; outline: none; min-width: 200px; }
+    .search-inp:focus { border-color: var(--accent); }
+    .search-inp::placeholder { color: var(--muted2); }
 
-    .action-btns { display:flex; gap:6px; }
+    /* Drawer */
+    .user-drawer { position: fixed; right: 0; top: 0; bottom: 0; width: 430px; background: var(--surface); border-left: 1px solid var(--border2); z-index: 300; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.16,1,0.3,1); display: flex; flex-direction: column; }
+    .user-drawer.open { transform: none; }
+    .drawer-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 299; display: none; }
+    .drawer-backdrop.open { display: block; }
+    .drawer-header { padding: 20px 22px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .drawer-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+    .drawer-close { width: 30px; height: 30px; border-radius: 8px; border: none; background: var(--surface2); color: var(--muted); cursor: pointer; font-size: 16px; display: grid; place-items: center; }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 20px 22px; }
 
-    /* Expandable rows */
-    .detail-row { display:none; }
-    .detail-row.open { display:table-row; }
-    .detail-cell { padding:16px 14px; background:var(--surface2); }
-    .detail-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
-    .detail-item label { font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px; }
-    .detail-item span { font-size:13px; }
+    .d-avatar-row { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+    .d-avatar { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--purple)); display: grid; place-items: center; font-size: 22px; font-weight: 800; color: #fff; flex-shrink: 0; }
+    .d-name { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
+    .d-email { font-size: 13px; color: var(--muted); margin-top: 2px; word-break: break-all; }
 
-    .pw-reset-form { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    .pw-reset-form input { flex:1; min-width:180px; padding:8px 12px; background:var(--surface3); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:var(--font-body); font-size:13px; outline:none; }
-    .pw-reset-form input:focus { border-color:var(--accent); }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    .info-box { background: var(--surface2); border-radius: 10px; padding: 11px 13px; }
+    .info-box.full { grid-column: 1 / -1; }
+    .info-box label { font-size: 10px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; display: block; margin-bottom: 3px; }
+    .info-box span { font-size: 12px; font-weight: 500; word-break: break-all; display: block; }
+    .mono { font-family: var(--font-mono) !important; font-size: 11px !important; }
 
-    /* Search */
-    .table-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:12px; flex-wrap:wrap; }
-    .search-input { padding:8px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:var(--font-body); font-size:13px; outline:none; width:240px; }
-    .search-input:focus { border-color:var(--accent); }
+    .d-section { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin: 16px 0 8px; }
 
-    /* Data view tabs */
-    .data-tabs { display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
-    .data-tab { padding:6px 14px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:var(--font-body); font-size:13px; cursor:pointer; transition:all 0.15s; }
-    .data-tab:hover { border-color:var(--border2); color:var(--text); }
-    .data-tab.active { background:rgba(255,77,109,0.12); border-color:rgba(255,77,109,0.3); color:var(--accent2); }
+    .action-list { display: flex; flex-direction: column; gap: 7px; }
+    .action-btn { display: flex; align-items: center; gap: 12px; padding: 11px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.15s; width: 100%; text-align: left; }
+    .action-btn:hover { border-color: var(--border2); background: var(--surface3); }
+    .action-btn.danger:hover { border-color: rgba(230,63,107,0.3); background: rgba(230,63,107,0.06); }
+    .action-btn .a-icon { font-size: 18px; }
+    .action-btn .a-title { font-size: 13px; font-weight: 600; display: block; }
+    .action-btn .a-desc { font-size: 11px; color: var(--muted); display: block; margin-top: 1px; }
+    .action-btn .a-arrow { margin-left: auto; color: var(--muted2); }
 
-    .loading { text-align:center; padding:40px; color:var(--muted); }
+    .user-data-mini { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: var(--surface2); border-radius: 7px; font-size: 12px; margin-bottom: 6px; }
 
-    .toast { position:fixed; bottom:24px; right:24px; background:var(--surface2); border:1px solid var(--border2); border-radius:10px; padding:12px 18px; font-size:14px; z-index:999; transform:translateY(10px); opacity:0; transition:all 0.25s; pointer-events:none; }
-    .toast.show { transform:none; opacity:1; }
+    /* Modals */
+    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 400; align-items: center; justify-content: center; padding: 24px; }
+    .modal-backdrop.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 18px; padding: 26px; width: 100%; max-width: 440px; animation: fadeUp 0.25s ease; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .modal-header h3 { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
+    .modal-close { width: 28px; height: 28px; border-radius: 7px; border: none; background: var(--surface2); color: var(--muted); cursor: pointer; font-size: 14px; }
+    .modal p { color: var(--muted); font-size: 13px; margin-bottom: 12px; line-height: 1.6; }
+    .modal-inp { width: 100%; padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; color: var(--text); font-family: var(--font-body); font-size: 14px; outline: none; margin-bottom: 10px; }
+    .modal-inp:focus { border-color: var(--accent); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
 
-    /* Modal */
-    .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); z-index:200; align-items:center; justify-content:center; padding:24px; }
-    .modal-backdrop.open { display:flex; }
-    .modal { background:var(--surface); border:1px solid var(--border2); border-radius:20px; padding:28px; width:100%; max-width:460px; animation:slideUp 0.3s ease; }
-    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-    .modal-header h3 { font-family:var(--font-display); font-size:18px; font-weight:700; }
-    .modal-close { width:30px; height:30px; border-radius:8px; border:none; background:var(--surface2); color:var(--muted); cursor:pointer; font-size:14px; }
-    .modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+    .log-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .log-item:last-child { border-bottom: none; }
+    .log-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+    .log-text { font-size: 13px; }
+    .log-time { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--font-mono); }
 
-    @media (max-width:700px) {
-      .admin-body { padding:16px; }
-      .detail-grid { grid-template-columns:1fr; }
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 10px; padding: 12px 18px; font-size: 13px; z-index: 9999; transform: translateY(10px); opacity: 0; transition: all 0.25s; pointer-events: none; max-width: 320px; }
+    .toast.show { transform: none; opacity: 1; }
+
+    .empty { text-align: center; padding: 36px; color: var(--muted); font-size: 13px; }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-thumb { background: var(--muted2); border-radius: 3px; }
+
+    @media (max-width: 768px) {
+      .adm-sidebar { display: none; }
+      .adm-main { margin-left: 0; }
+      .user-drawer { width: 100%; }
+      .info-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-<!-- Admin Login -->
+<!-- LOGIN -->
 <div id="admin-login">
-  <div class="admin-login-box">
-    <div class="admin-badge">🔒 Admin Access Only</div>
-    <h2>Admin Panel</h2>
-    <p>Restricted area. Authorized personnel only.</p>
-    <div class="form-group">
-      <label class="form-label">Username</label>
-      <input type="text" id="admin-user" class="form-input" placeholder="Admin username" />
-    </div>
-    <div class="form-group">
-      <label class="form-label">Password</label>
-      <input type="password" id="admin-pass" class="form-input" placeholder="••••••••" />
-    </div>
-    <button class="btn-admin-login" onclick="adminLogin()">Access Panel</button>
-    <div class="admin-error" id="admin-err">Incorrect credentials. Access denied.</div>
+  <div class="login-box">
+    <div class="login-icon">🛡️</div>
+    <h2>Admin Control Center</h2>
+    <p>Restricted. Planr administrators only.</p>
+    <div class="fl"><label>Username</label><input type="text" id="adm-user" placeholder="Username" autocomplete="off"/></div>
+    <div class="fl"><label>Password</label><input type="password" id="adm-pass" placeholder="••••••••"/></div>
+    <button class="btn-login" onclick="adminLogin()">Access Control Center</button>
+    <div class="login-err" id="login-err">Invalid credentials. Access denied.</div>
   </div>
 </div>
 
-<!-- Admin Panel -->
+<!-- PANEL -->
 <div id="admin-panel">
-  <div class="admin-header">
-    <div class="admin-header-left">
-      <span class="admin-logo">📋 Planr</span>
-      <span class="admin-badge-sm">ADMIN</span>
+  <aside class="adm-sidebar">
+    <div class="adm-logo">
+      <span style="font-size:18px">📋</span>
+      <span class="adm-logo-text">Planr</span>
+      <span class="adm-badge">ADMIN</span>
     </div>
-    <button class="btn-logout" onclick="adminLogout()">Sign Out</button>
-  </div>
+    <nav class="adm-nav">
+      <div class="adm-nav-section">Overview</div>
+      <button class="adm-nav-item active" onclick="showSection('overview',this)"><span class="nav-icon">📊</span>Dashboard</button>
+      <div class="adm-nav-section">Users</div>
+      <button class="adm-nav-item" onclick="showSection('users',this)"><span class="nav-icon">👥</span>All Accounts</button>
+      <button class="adm-nav-item" onclick="showSection('sessions',this)"><span class="nav-icon">🔐</span>Sessions & Logins</button>
+      <div class="adm-nav-section">Content</div>
+      <button class="adm-nav-item" onclick="showSection('notes',this)"><span class="nav-icon">📝</span>All Notes</button>
+      <button class="adm-nav-item" onclick="showSection('tasks',this)"><span class="nav-icon">✅</span>All Tasks</button>
+      <button class="adm-nav-item" onclick="showSection('events',this)"><span class="nav-icon">📅</span>All Events</button>
+      <div class="adm-nav-section">System</div>
+      <button class="adm-nav-item" onclick="showSection('activity',this)"><span class="nav-icon">📜</span>Activity Log</button>
+      <button class="adm-nav-item" onclick="showSection('info',this)"><span class="nav-icon">ℹ️</span>Info & Limits</button>
+    </nav>
+    <div class="adm-footer"><button class="btn-signout" onclick="adminLogout()">Sign Out</button></div>
+  </aside>
 
-  <div class="admin-body">
-
-    <!-- Stats -->
-    <div class="admin-stats" id="admin-stats">
-      <div class="admin-stat">
-        <div class="admin-stat-num" id="stat-users">—</div>
-        <div class="admin-stat-label">Total Users</div>
-      </div>
-      <div class="admin-stat">
-        <div class="admin-stat-num" id="stat-all-notes">—</div>
-        <div class="admin-stat-label">Total Notes</div>
-      </div>
-      <div class="admin-stat">
-        <div class="admin-stat-num" id="stat-all-tasks">—</div>
-        <div class="admin-stat-label">Total Tasks</div>
-      </div>
-      <div class="admin-stat">
-        <div class="admin-stat-num" id="stat-all-events">—</div>
-        <div class="admin-stat-label">Total Events</div>
-      </div>
-    </div>
-
-    <!-- Users Table -->
-    <div class="section-card">
-      <div class="table-header">
-        <h2>👥 User Accounts</h2>
-        <input type="text" class="search-input" placeholder="Search users..." oninput="searchUsers(this.value)" />
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Email</th>
-              <th>Created</th>
-              <th>Last Sign In</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="users-tbody">
-            <tr><td colspan="5" class="loading">Loading users...</td></tr>
-          </tbody>
-        </table>
+  <main class="adm-main">
+    <div class="adm-topbar">
+      <span class="adm-page-title" id="page-title">Dashboard</span>
+      <div class="adm-topbar-right">
+        <span class="adm-time" id="adm-clock"></span>
+        <div class="status-dot" title="Online"></div>
       </div>
     </div>
 
-    <!-- All Data Section -->
-    <div class="section-card">
-      <h2>📊 All User Data</h2>
-      <div class="data-tabs">
-        <button class="data-tab active" onclick="showDataTab('notes', this)">Notes</button>
-        <button class="data-tab" onclick="showDataTab('tasks', this)">Tasks</button>
-        <button class="data-tab" onclick="showDataTab('events', this)">Events</button>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead id="data-thead"></thead>
-          <tbody id="data-tbody">
-            <tr><td class="loading">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <div class="adm-body">
 
-  </div>
+      <!-- OVERVIEW -->
+      <div class="adm-section active" id="section-overview">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-card-top"><span class="stat-icon">👥</span></div><div class="stat-num" id="s-users">—</div><div class="stat-label">Total Users</div></div>
+          <div class="stat-card"><div class="stat-card-top"><span class="stat-icon">📝</span></div><div class="stat-num" id="s-notes">—</div><div class="stat-label">Total Notes</div></div>
+          <div class="stat-card"><div class="stat-card-top"><span class="stat-icon">✅</span></div><div class="stat-num" id="s-tasks">—</div><div class="stat-label">Total Tasks</div></div>
+          <div class="stat-card"><div class="stat-card-top"><span class="stat-icon">📅</span></div><div class="stat-num" id="s-events">—</div><div class="stat-label">Total Events</div></div>
+          <div class="stat-card"><div class="stat-card-top"><span class="stat-icon">🆕</span></div><div class="stat-num" id="s-new">—</div><div class="stat-label">New This Week</div></div>
+          <div class="stat-card"><div class="stat-card-top"><span class="stat-icon">✔️</span></div><div class="stat-num" id="s-done">—</div><div class="stat-label">Tasks Completed</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">🕐 Recent Signups</span></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>User</th><th>Email</th><th>Joined</th><th>Notes</th><th>Tasks</th></tr></thead>
+            <tbody id="recent-tbody"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- USERS -->
+      <div class="adm-section" id="section-users">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">👥 All User Accounts</span>
+            <div class="search-row">
+              <input class="search-inp" placeholder="Search name or email..." oninput="filterUsers(this.value)"/>
+              <button class="btn btn-primary" onclick="loadAllData()">↻ Refresh</button>
+            </div>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>User</th><th>Email</th><th>Created</th><th>Last Login</th><th>Notes</th><th>Tasks</th><th>Actions</th></tr></thead>
+            <tbody id="users-tbody"><tr><td colspan="7" class="empty">Loading...</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- SESSIONS -->
+      <div class="adm-section" id="section-sessions">
+        <div class="card">
+          <div class="card-header"><span class="card-title">🔐 Login Records</span></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>User</th><th>Email</th><th>Account Created</th><th>Last Sign In</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="sessions-tbody"><tr><td colspan="6" class="empty">Loading...</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- NOTES -->
+      <div class="adm-section" id="section-notes">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">📝 All Notes</span>
+            <input class="search-inp" placeholder="Search notes..." oninput="filterNotes(this.value)"/>
+          </div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Title</th><th>Category</th><th>User ID</th><th>Created</th><th>Action</th></tr></thead>
+            <tbody id="notes-tbody"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- TASKS -->
+      <div class="adm-section" id="section-tasks">
+        <div class="card">
+          <div class="card-header"><span class="card-title">✅ All Tasks</span></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Title</th><th>Priority</th><th>Done</th><th>Due</th><th>User ID</th><th>Action</th></tr></thead>
+            <tbody id="tasks-tbody"><tr><td colspan="6" class="empty">Loading...</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- EVENTS -->
+      <div class="adm-section" id="section-events">
+        <div class="card">
+          <div class="card-header"><span class="card-title">📅 All Events</span></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Title</th><th>Date</th><th>Time</th><th>User ID</th><th>Action</th></tr></thead>
+            <tbody id="events-tbody"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- ACTIVITY -->
+      <div class="adm-section" id="section-activity">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">📜 Admin Activity Log</span>
+            <button class="btn btn-danger" onclick="clearLog()">Clear</button>
+          </div>
+          <div id="activity-log"></div>
+        </div>
+      </div>
+
+      <!-- INFO -->
+      <div class="adm-section" id="section-info">
+        <div class="card">
+          <div class="card-header"><span class="card-title">ℹ️ Capabilities & Limitations</span></div>
+          <div style="font-size:13px;line-height:1.9;color:var(--muted)">
+            <p><strong style="color:var(--green)">✓ What this admin panel CAN do:</strong></p>
+            <p>• View all user accounts with creation date and last login time</p>
+            <p>• Read, search, and delete any user's notes, tasks, and events</p>
+            <p>• View login session history (last sign-in timestamps from Supabase auth)</p>
+            <p>• Send password reset emails via Supabase (use Supabase Dashboard)</p>
+            <p>• Delete all data for a specific user</p>
+            <p>• Log admin actions locally in the Activity Log</p>
+            <br>
+            <p><strong style="color:var(--accent2)">✗ Limitations (frontend-only app):</strong></p>
+            <p>• <strong style="color:var(--text)">Password reset</strong> — Cannot directly change passwords without the Supabase service role key. Go to Supabase Dashboard → Authentication → Users → ⋮ → Send Recovery Email</p>
+            <p>• <strong style="color:var(--text)">Email change</strong> — Same limitation. Must be done via Supabase Dashboard</p>
+            <p>• <strong style="color:var(--text)">Real IP logging</strong> — Browsers cannot log server-side IPs. Only Supabase's built-in metadata (last sign-in time) is available</p>
+            <p>• <strong style="color:var(--text)">Device tracking</strong> — Full device fingerprinting requires a backend service</p>
+            <p>• <strong style="color:var(--text)">Real-time presence</strong> — Cannot see who is currently online without a WebSocket backend</p>
+            <br>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <a href="https://supabase.com/dashboard" target="_blank" class="btn btn-blue">Open Supabase Dashboard</a>
+              <a href="../" target="_blank" class="btn">Open Main App</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
 </div>
 
-<!-- Password Reset Modal -->
-<div class="modal-backdrop" id="pw-modal">
+<!-- DRAWER -->
+<div class="drawer-backdrop" id="drawer-backdrop" onclick="closeDrawer()"></div>
+<div class="user-drawer" id="user-drawer">
+  <div class="drawer-header">
+    <span class="drawer-title">User Details</span>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-backdrop" id="modal-pw">
   <div class="modal">
-    <div class="modal-header">
-      <h3>Reset Password</h3>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <p style="color:var(--muted);font-size:13px;margin-bottom:16px">Resetting password for: <strong id="pw-user-email"></strong></p>
-    <div class="form-group">
-      <label class="form-label">New Password</label>
-      <input type="text" id="new-password" class="form-input" placeholder="Enter new password (min 6 chars)" />
-    </div>
+    <div class="modal-header"><h3>🔑 Password Reset</h3><button class="modal-close" onclick="closeModal('modal-pw')">✕</button></div>
+    <p>User: <strong id="modal-pw-email" style="color:var(--text)"></strong></p>
+    <p>Because this app runs on the frontend, direct password changes need the Supabase service role key. Instead:</p>
+    <p style="color:var(--text)">1. Go to Supabase Dashboard → Authentication → Users<br>2. Find this user → click ⋮ → <strong>Send Recovery Email</strong></p>
+    <p>Or enter a note for your reference:</p>
+    <input class="modal-inp" id="modal-pw-note" placeholder="e.g. New password: mypassword123"/>
     <div class="modal-actions">
-      <button class="btn-sm" onclick="closeModal()">Cancel</button>
-      <button class="btn-sm primary" onclick="confirmReset()">Reset Password</button>
+      <button class="btn" onclick="closeModal('modal-pw')">Close</button>
+      <button class="btn btn-blue" onclick="openSupabaseAuth()">Open Supabase Auth →</button>
     </div>
   </div>
 </div>
 
-<div class="toast" id="admin-toast"></div>
+<div class="modal-backdrop" id="modal-delete">
+  <div class="modal">
+    <div class="modal-header"><h3>🗑 Delete User Data</h3><button class="modal-close" onclick="closeModal('modal-delete')">✕</button></div>
+    <p>Delete ALL data (notes, tasks, events) for:</p>
+    <p><strong id="modal-delete-name" style="color:var(--text)"></strong></p>
+    <p style="color:var(--accent2)">⚠️ Cannot be undone. Account stays active.</p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-delete')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDeleteData()">Delete All Data</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-email">
+  <div class="modal">
+    <div class="modal-header"><h3>✉️ Email Change Info</h3><button class="modal-close" onclick="closeModal('modal-email')">✕</button></div>
+    <p>User: <strong id="modal-email-user" style="color:var(--text)"></strong></p>
+    <p>Changing a user's email requires the Supabase service role key (not safe for frontend).</p>
+    <p style="color:var(--text)">Go to: Supabase Dashboard → Authentication → Users → find user → Edit</p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-email')">Close</button>
+      <button class="btn btn-blue" onclick="openSupabaseAuth()">Open Supabase Auth →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
